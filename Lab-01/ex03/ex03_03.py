@@ -1,5 +1,5 @@
 def TaoTupleTuLisst(lst):
-    return tuple[::-1]
+    return tuple[lst]
 inputlist = input("Nhập danh sách các số, cách nhau bằng dấu phẩy:")
 numbers = list(map(int,inputlist.split(',')))
 MyTuple = TaoTupleTuLisst(numbers)
