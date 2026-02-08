@@ -1,7 +1,7 @@
 def TaoTupleTuLisst(lst):
     return tuple[lst]
-inputlist = input("Nhập danh sách các số, (cách nhau bằng dấu phẩy):")
+inputlist = input("Nhập danh sách các số, cách nhau bằng dấu phẩy:")
 numbers = list(map(int,inputlist.split(',')))
-MyTuple = TaoTupleTuLisst(numbers)
+MyTuple = TaoTupleTuList(numbers)
 print("List: ",numbers)
 print("Tuple từ List: ", MyTuple)
