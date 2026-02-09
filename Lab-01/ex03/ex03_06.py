@@ -10,4 +10,4 @@ result = XoaPhanTu(MyDict, keyToDelete)
 if result:
     print("Phần tử đã được xóa từ Dictionary:", MyDict)
 else:
-    print("Không tìm thấy phần tử cần xóa trong Dictionary!!")
+    print("Không tìm thấy phần tử cần xóa trong Dictionary!")

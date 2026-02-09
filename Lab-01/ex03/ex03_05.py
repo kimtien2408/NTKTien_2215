@@ -6,7 +6,7 @@ def DemSoLanXuatHien(lst):
         else:
             countDict[item]=1
     return countDict
-inputString = input("Nhập Danh sách các từ (cách nhau bằng dấu cách):")
+inputString = input("Nhập Danh sách các từ, cách nhau bằng dấu cách:")
 wordList = inputString.split()
 SoLanXuatHien = DemSoLanXuatHien(wordList)
 print("Số lần xuất hiện của các phần tử:", SoLanXuatHien)
