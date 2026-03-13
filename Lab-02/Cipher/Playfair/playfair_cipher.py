@@ -35,7 +35,7 @@ class PlayFairCipher:
 
         for i in range(0, len(plain_text), 2):
             pair = plain_text[i:i+2]
-            if len(pair) == 1: # Xử lý nếu số lượng ký tự lẻ
+            if len(pair) == 1: 
                 pair += "X"
             
             row1, col1 = self.find_letter_coords(matrix, pair[0])
@@ -66,7 +66,6 @@ class PlayFairCipher:
             else:
                 decrypted_text += matrix[row1][col2] + matrix[row2][col1]
 
-        # Loại bỏ ký tự 'X' nếu nó là ký tự cuối cùng và là ký tự được thêm vào
         banro = ""
         for i in range(0, len(decrypted_text)-2, 2):
             if decrypted_text[i] == decrypted_text[i+2]:

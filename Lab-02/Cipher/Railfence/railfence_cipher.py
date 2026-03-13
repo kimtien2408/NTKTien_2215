@@ -32,7 +32,7 @@ class RailfenceCipher:
         start = 0 
         
         for length in rail_lengths:
-            rails.append(cipher_text[start:start + length])
+            rails.append(cipher_text[ start:start + length])
             start += length
         plain_text = ""
         rail_index = 0
