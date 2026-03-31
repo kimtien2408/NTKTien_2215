@@ -67,7 +67,7 @@ def handle_client(client_socket, client_address):
             # Send received message to all other clients
             for client, key in clients:
                 if client != client_socket:
-                    encrypted = encrypt_message(key, decrypted_message)
+                    encrypted = encrypt_message( key, decrypted_message)
                     client.send(encrypted)
         except:
             break
