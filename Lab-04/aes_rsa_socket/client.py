@@ -1,65 +1,78 @@
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
-from Crypto.Util.Padding import pad, unpad
 import socket
 import threading
-import hashlib
+from tkinter import *
+from tkinter import scrolledtext
+from Crypto.Cipher import AES, PKCS1_OAEP
+from Crypto.PublicKey import RSA
+from Crypto.Util.Padding import pad, unpad
 
-# Initialize client socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect(('localhost', 12345))
+class ChatClient:
+    def __init__(self, host, port):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((host, port))
+        
+        self.client_key = RSA.generate(2048)
+        self.server_public_key = RSA.import_key(self.socket.recv(2048))
+        self.socket.send(self.client_key.publickey().export_key(format='PEM'))
+        
+        encrypted_aes_key = self.socket.recv(2048)
+        cipher_rsa = PKCS1_OAEP.new(self.client_key)
+        self.aes_key = cipher_rsa.decrypt(encrypted_aes_key)
 
-# Generate RSA key pair
-client_key = RSA.generate(2048)
+        # --- Giao diện Tkinter ---
+        self.root = Tk()
+        self.root.title("AES-RSA Secure Chat")
+        
+        self.chat_area = scrolledtext.ScrolledText(self.root, state='disabled', width=50, height=20)
+        self.chat_area.pack(padx=10, pady=10)
+        
+        self.msg_entry = Entry(self.root, width=40)
+        self.msg_entry.pack(side=LEFT, padx=10, pady=10)
+        self.msg_entry.bind("<Return>", lambda event: self.send_message())
+        
+        self.send_btn = Button(self.root, text="Gửi", command=self.send_message)
+        self.send_btn.pack(side=RIGHT, padx=10)
 
-# Receive server's public key
-server_public_key = RSA.import_key(client_socket.recv(2048))
+        # Luồng nhận tin
+        threading.Thread(target=self.receive_messages, daemon=True).start()
+        self.root.mainloop()
 
-# Send client's public key to the server
-client_socket.send(client_key.publickey().export_key(format='PEM'))
+    def encrypt_message(self, message):
+        cipher = AES.new(self.aes_key, AES.MODE_CBC)
+        ciphertext = cipher.encrypt(pad(message.encode(), AES.block_size))
+        return cipher.iv + ciphertext
 
-# Receive encrypted AES key from the server
-encrypted_aes_key = client_socket.recv(2048)
+    def decrypt_message(self, encrypted_message):
+        iv = encrypted_message[:AES.block_size]
+        ciphertext = encrypted_message[AES.block_size:]
+        cipher = AES.new(self.aes_key, AES.MODE_CBC, iv)
+        return unpad(cipher.decrypt(ciphertext), AES.block_size).decode()
 
-# Decrypt the AES key using client's private key
-cipher_rsa = PKCS1_OAEP.new(client_key)
-aes_key = cipher_rsa.decrypt(encrypted_aes_key)
+    def send_message(self):
+        msg = self.msg_entry.get()
+        if msg:
+            self.display_message(f"Bạn: {msg}")
+            encrypted = self.encrypt_message(msg)
+            self.socket.send(encrypted)
+            self.msg_entry.delete(0, END)
+            if msg == "exit":
+                self.root.quit()
 
-# Function to encrypt message
-def encrypt_message(key, message):
-    cipher = AES.new(key, AES.MODE_CBC)
-    ciphertext = cipher.encrypt(pad(message.encode(), AES.block_size))
-    return cipher.iv + ciphertext
+    def receive_messages(self):
+        while True:
+            try:
+                data = self.socket.recv(1024)
+                if data:
+                    decrypted = self.decrypt_message(data)
+                    self.display_message(f"Đối phương: {decrypted}")
+            except:
+                break
 
-# Function to decrypt message
-def decrypt_message(key, encrypted_message):
-    iv = encrypted_message[:AES.block_size]
-    ciphertext = encrypted_message[AES.block_size:]
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    decrypted_message = unpad(cipher.decrypt(ciphertext), AES.block_size)
-    return decrypted_message.decode()
+    def display_message(self, msg):
+        self.chat_area.config(state='normal')
+        self.chat_area.insert(END, msg + "\n")
+        self.chat_area.config(state='disabled')
+        self.chat_area.yview(END)
 
-# Function to receive messages from server
-def receive_messages():
-    while True:
-        try:
-            encrypted_message = client_socket.recv(1024)
-            decrypted_message = decrypt_message(aes_key, encrypted_message)
-            print("Received:", decrypted_message)
-        except:
-            break
-
-# Start thread for receiving messages
-receive_thread = threading.Thread(target=receive_messages)
-receive_thread.start()
-
-# Main loop to send messages
-while True:
-    message = input()
-    encrypted = encrypt_message(aes_key, message)
-    client_socket.send(encrypted)
-    if message == "exit":
-        break
-
-client_socket.close()
+if __name__ == "__main__":
+    ChatClient('localhost', 12345)
